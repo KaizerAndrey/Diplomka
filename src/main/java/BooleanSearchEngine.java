@@ -8,7 +8,7 @@ import java.util.*;
 
 
 public class BooleanSearchEngine implements SearchEngine {
-    protected static Map<String, List<PageEntry>> wordIndex;
+    private final Map<String, List<PageEntry>> wordIndex;
 
     public BooleanSearchEngine() throws IOException {
         wordIndex = Index.getIndexedStorage().getStorage();
@@ -39,14 +39,17 @@ public class BooleanSearchEngine implements SearchEngine {
                     String tmpWord = entry.getKey();
                     int tmpValue = entry.getValue();
 
-                    List<PageEntry> listPageTmp = new ArrayList<>();
-                    listPageTmp.add(new PageEntry(namePDFFile, j + 1, tmpValue));
-
-                    if (wordIndex.containsKey(tmpWord)) {
-                        wordIndex.get(tmpWord).add(new PageEntry(namePDFFile, j + 1, tmpValue));
-                    } else
+                    if (!wordIndex.containsKey(tmpWord)) {
+                        List<PageEntry> listPageTmp = new ArrayList<>();
                         wordIndex.put(tmpWord, listPageTmp);
+                    }
+
+                    wordIndex.get(tmpWord).add(new PageEntry(namePDFFile, j + 1, tmpValue));
                 }
+            }
+
+            for (Map.Entry<String, List<PageEntry>> entry : wordIndex.entrySet()) {
+                Collections.sort(entry.getValue());
             }
         }
     }
@@ -54,9 +57,6 @@ public class BooleanSearchEngine implements SearchEngine {
     @Override
     public List<PageEntry> search(String word) {
         String wordToLowReg = word.toLowerCase();
-        List<PageEntry> pageEntries = wordIndex.getOrDefault(wordToLowReg, Collections.emptyList());
-
-        Collections.sort(pageEntries);
-        return pageEntries;
+        return wordIndex.getOrDefault(wordToLowReg, Collections.emptyList());
     }
 }
